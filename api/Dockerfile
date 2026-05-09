@@ -12,6 +12,11 @@
 
 FROM node:20-bookworm-slim AS deps
 ENV PNPM_HOME=/usr/local/pnpm-global PATH=$PATH:/usr/local/pnpm-global
+# Prisma's query engine binary links against OpenSSL at runtime — bookworm-slim
+# ships without it. Without this, Prisma logs warnings and may fail to connect.
+RUN apt-get update -y \
+ && apt-get install -y --no-install-recommends openssl ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 WORKDIR /repo
 
@@ -33,6 +38,9 @@ RUN pnpm --filter @nutrilens/shared build && pnpm --filter @nutrilens/api db:gen
 # ---
 
 FROM node:20-bookworm-slim AS runner
+RUN apt-get update -y \
+ && apt-get install -y --no-install-recommends openssl ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 WORKDIR /app
 ENV NODE_ENV=production PORT=4000
