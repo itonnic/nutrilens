@@ -4,7 +4,12 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // App runtime uses the pooled connection (PgBouncer / Supabase
+  // transaction pooler on :6543). Migrations need a direct connection
+  // because PgBouncer can't run DDL inside multi-statement transactions —
+  // Prisma routes `migrate deploy` through `directUrl` automatically.
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum Gender {
