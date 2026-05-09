@@ -58,5 +58,10 @@ RUN pnpm install --frozen-lockfile --prod --filter @nutrilens/api... --filter @n
 USER node
 EXPOSE 4000
 
-# Run migrations on boot; use `db:migrate:deploy` (no schema sync, prod-safe).
-CMD ["sh", "-c", "cd api && pnpm db:migrate:deploy && node dist/src/main.js"]
+# Migrations are NOT run on boot. Supabase's direct URL is IPv6-only and many
+# free hosts (Render, Koyeb's free tier) lack IPv6 egress, so `migrate deploy`
+# fails to reach the host. Instead run migrations from a developer machine
+# whenever the schema changes:
+#   cd api && pnpm db:migrate:deploy   # uses DIRECT_URL from .env.prod
+# The boot command just starts the API.
+CMD ["sh", "-c", "cd api && node dist/src/main.js"]
