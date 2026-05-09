@@ -1,0 +1,250 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum ActivityLevel {
+  SEDENTARY
+  LIGHT
+  MODERATE
+  ACTIVE
+  VERY_ACTIVE
+}
+
+enum GoalType {
+  LOSE
+  MAINTAIN
+  GAIN
+  HEALTHIER
+}
+
+enum GoalSpeed {
+  SLOW
+  BALANCED
+  AGGRESSIVE
+}
+
+enum UnitSystem {
+  METRIC
+  IMPERIAL
+}
+
+enum MealType {
+  BREAKFAST
+  LUNCH
+  DINNER
+  SNACK
+  DRINK
+}
+
+enum MealSource {
+  AI
+  MANUAL
+  BARCODE
+  RECIPE
+}
+
+enum MealStatus {
+  DRAFT
+  CONFIRMED
+  NEEDS_REVIEW
+}
+
+enum AiJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  name         String
+  passwordHash String?
+  image        String?
+  hasOnboarded Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  profile        UserProfile?
+  targets        NutritionTarget?
+  meals          Meal[]
+  waterEntries   WaterEntry[]
+  weightEntries  WeightEntry[]
+  aiJobs         AiAnalysisJob[]
+  dailyLogs      DailyLog[]
+
+  @@index([email])
+}
+
+model UserProfile {
+  id                 String         @id @default(uuid())
+  userId             String         @unique
+  age                Int?
+  gender             Gender?
+  heightCm           Float?
+  weightKg           Float?
+  activityLevel      ActivityLevel?
+  goalType           GoalType?
+  goalSpeed          GoalSpeed?
+  targetWeightKg     Float?
+  weeklyGoalRate     Float?
+  dietaryPreferences String[]
+  customDietNotes    String?
+  timezone           String         @default("UTC")
+  unitSystem         UnitSystem     @default(METRIC)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model NutritionTarget {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  dailyCalories Int
+  proteinGrams  Int
+  carbsGrams    Int
+  fatGrams      Int
+  fiberGrams    Int
+  waterMl       Int
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Meal {
+  id           String     @id @default(uuid())
+  userId       String
+  mealType     MealType
+  title        String
+  imageUrl     String?
+  thumbnailUrl String?
+  /// SHA-256 hex of the original upload bytes — used for 10-minute duplicate detection.
+  /// Stored as its own column so downstream writers (AI processor) cannot accidentally
+  /// drop it when they update aiRawJson.
+  imageHash    String?
+  /// Object-storage keys so we can clean up files on delete.
+  storageKey   String?
+  thumbKey     String?
+  consumedAt   DateTime
+  calories     Float      @default(0)
+  protein      Float      @default(0)
+  carbs        Float      @default(0)
+  fat          Float      @default(0)
+  fiber        Float?
+  sugar        Float?
+  sodium       Float?
+  confidence   Float?
+  source       MealSource @default(AI)
+  status       MealStatus @default(DRAFT)
+  aiRawJson    Json?
+  userNote     String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items MealItem[]
+  jobs  AiAnalysisJob[]
+
+  @@index([userId, consumedAt])
+  @@index([userId, status])
+  @@index([userId, imageHash, createdAt])
+}
+
+model MealItem {
+  id          String   @id @default(uuid())
+  mealId      String
+  name        String
+  quantity    Float
+  unit        String
+  calories    Float
+  protein     Float
+  carbs       Float
+  fat         Float
+  fiber       Float?
+  sugar       Float?
+  sodium      Float?
+  confidence  Float?
+  assumptions String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  meal Meal @relation(fields: [mealId], references: [id], onDelete: Cascade)
+
+  @@index([mealId])
+}
+
+model DailyLog {
+  id            String   @id @default(uuid())
+  userId        String
+  date          DateTime @db.Date
+  totalCalories Float    @default(0)
+  totalProtein  Float    @default(0)
+  totalCarbs    Float    @default(0)
+  totalFat      Float    @default(0)
+  totalFiber    Float    @default(0)
+  totalWaterMl  Int      @default(0)
+  score         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date])
+}
+
+model WaterEntry {
+  id        String   @id @default(uuid())
+  userId    String
+  amountMl  Int
+  loggedAt  DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, loggedAt])
+}
+
+model WeightEntry {
+  id        String   @id @default(uuid())
+  userId    String
+  weightKg  Float
+  loggedAt  DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, loggedAt])
+}
+
+model AiAnalysisJob {
+  id           String      @id @default(uuid())
+  userId       String
+  mealId       String?
+  imageUrl     String
+  status       AiJobStatus @default(PENDING)
+  resultJson   Json?
+  errorMessage String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  meal Meal? @relation(fields: [mealId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+  @@index([mealId])
+}

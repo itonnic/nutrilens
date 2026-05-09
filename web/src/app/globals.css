@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 50 25% 97%;
+    --surface: 0 0% 100%;
+    --foreground: 140 10% 13%;
+    --muted: 140 8% 94%;
+    --muted-foreground: 140 5% 48%;
+    --border: 140 8% 90%;
+    --input: 140 8% 92%;
+    --ring: 130 35% 56%;
+    --primary: 130 35% 56%;
+    --primary-foreground: 0 0% 100%;
+    --radius: 1.25rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  body {
+    background-image:
+      radial-gradient(circle at 8% -10%, rgba(184, 233, 134, 0.45), transparent 40%),
+      radial-gradient(circle at 95% 5%, rgba(255, 159, 110, 0.32), transparent 45%),
+      radial-gradient(circle at 50% 110%, rgba(167, 139, 250, 0.25), transparent 55%);
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  .card-soft {
+    @apply rounded-3xl bg-surface shadow-card border border-white/60 backdrop-blur-sm;
+  }
+
+  .glass {
+    @apply rounded-3xl border border-white/70 bg-white/80 backdrop-blur-md shadow-soft;
+  }
+
+  .ring-progress {
+    transform: rotate(-90deg);
+  }
+
+  .skeleton {
+    @apply relative overflow-hidden rounded-md bg-muted/60;
+  }
+  .skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.6),
+      transparent
+    );
+    background-size: 400px 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+}
+
+@layer utilities {
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+}

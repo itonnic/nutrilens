@@ -1,0 +1,39 @@
+# Hot-reload dev override. Use with:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# Mounts source code into the containers and replaces the prod CMD with the
+# watch-mode dev script for each app. Postgres/Redis are unchanged from base.
+
+services:
+  api:
+    build:
+      target: deps   # stop at the full-deps stage so we have nest CLI
+    command: sh -c "pnpm --filter @nutrilens/shared build && pnpm --filter @nutrilens/api db:generate && pnpm --filter @nutrilens/api db:migrate:deploy && pnpm --filter @nutrilens/api start:dev"
+    environment:
+      NODE_ENV: development
+    volumes:
+      - ./api/src:/repo/api/src
+      - ./api/prisma:/repo/api/prisma
+      - ./packages/shared/src:/repo/packages/shared/src
+      - api-dev-uploads:/repo/api/storage/local
+    working_dir: /repo
+
+  web:
+    build:
+      target: deps
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api}
+    command: sh -c "pnpm --filter @nutrilens/shared build && pnpm --filter @nutrilens/web dev"
+    environment:
+      NODE_ENV: development
+    volumes:
+      - ./web/src:/repo/web/src
+      - ./web/public:/repo/web/public
+      - ./web/next.config.mjs:/repo/web/next.config.mjs
+      - ./web/tailwind.config.ts:/repo/web/tailwind.config.ts
+      - ./web/postcss.config.mjs:/repo/web/postcss.config.mjs
+      - ./packages/shared/src:/repo/packages/shared/src
+    working_dir: /repo
+
+volumes:
+  api-dev-uploads:

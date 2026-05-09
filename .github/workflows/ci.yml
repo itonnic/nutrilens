@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Lint, typecheck, build, test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: nutrilens
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/nutrilens
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: ci-secret-not-used-anywhere-real
+      AI_PROVIDER: mock
+      STORAGE_DRIVER: local
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared package
+        run: pnpm --filter @nutrilens/shared build
+
+      - name: Generate Prisma client
+        run: pnpm --filter @nutrilens/api db:generate
+
+      - name: Apply migrations
+        run: pnpm --filter @nutrilens/api db:migrate:deploy
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build API
+        run: pnpm --filter @nutrilens/api build
+
+      - name: Run tests
+        run: pnpm --filter @nutrilens/api test --passWithNoTests
+
+      - name: Build web
+        run: pnpm --filter @nutrilens/web build

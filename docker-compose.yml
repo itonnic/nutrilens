@@ -1,0 +1,127 @@
+# Production-grade compose stack for NutriLens.
+#
+#   docker compose up -d              # start everything in the background
+#   docker compose logs -f api        # tail one service
+#   docker compose ps                 # see health
+#   docker compose down               # stop (data persists in volumes)
+#   docker compose down -v            # stop + wipe volumes
+#
+# Hot-reload dev mode (with source mounts + watch builds):
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# Service ordering: postgres + redis come up healthy first, api waits on both,
+# web waits on api. The healthchecks ensure each service is actually ready,
+# not just "started".
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: nutrilens-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-nutrilens}
+    ports:
+      - '${POSTGRES_PORT:-5433}:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-nutrilens}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - nutrilens
+
+  redis:
+    image: redis:7-alpine
+    container_name: nutrilens-redis
+    restart: unless-stopped
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - nutrilens
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    container_name: nutrilens-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-nutrilens}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-prod-this-is-only-for-local-compose}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o}
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      STORAGE_LOCAL_PATH: /app/api/storage/local
+      STORAGE_PUBLIC_BASE_URL: ${STORAGE_PUBLIC_BASE_URL:-http://localhost:4000/uploads}
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-10}
+      AI_RATE_LIMIT_PER_MINUTE: ${AI_RATE_LIMIT_PER_MINUTE:-10}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+    ports:
+      - '${API_PORT:-4000}:4000'
+    volumes:
+      # Persist uploaded meal images across container restarts.
+      - api-uploads:/app/api/storage/local
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://localhost:4000/health/ready').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    networks:
+      - nutrilens
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api}
+    container_name: nutrilens-web
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000/api}
+    ports:
+      - '${WEB_PORT:-3000}:3000'
+    healthcheck:
+      test: ['CMD', 'node', '-e', "fetch('http://localhost:3000/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    networks:
+      - nutrilens
+
+volumes:
+  postgres-data:
+  redis-data:
+  api-uploads:
+
+networks:
+  nutrilens:
+    driver: bridge

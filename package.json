@@ -1,0 +1,28 @@
+{
+  "name": "nutrilens",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "workspaces": [
+    "web",
+    "api",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm -r --parallel run dev",
+    "dev:web": "pnpm --filter @nutrilens/web dev",
+    "dev:api": "pnpm --filter @nutrilens/api start:dev",
+    "build": "pnpm --filter @nutrilens/shared build && pnpm --filter @nutrilens/api build && pnpm --filter @nutrilens/web build",
+    "lint": "pnpm -r run lint",
+    "typecheck": "pnpm -r run typecheck",
+    "db:migrate": "pnpm --filter @nutrilens/api db:migrate",
+    "db:seed": "pnpm --filter @nutrilens/api db:seed",
+    "db:studio": "pnpm --filter @nutrilens/api db:studio",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "typescript": "^5.6.3"
+  }
+}
