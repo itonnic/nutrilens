@@ -147,9 +147,16 @@ function balanceComponent(t: DailyTotals, g: NutritionTargets): number {
   return Math.max(0, 1 - diff);
 }
 
-export function balanceLabel(score: number): 'Balanced day' | 'Good progress' | 'Needs balance' | 'Incomplete tracking' {
-  if (score >= 85) return 'Balanced day';
-  if (score >= 70) return 'Good progress';
-  if (score >= 50) return 'Needs balance';
-  return 'Incomplete tracking';
+/**
+ * Stable, locale-neutral key matching the four `dashboard.*` translations the
+ * web ships. Server returns the key — the client translates it. Avoids
+ * baking a single language into the dashboard payload.
+ */
+export type BalanceLabelKey = 'balanced' | 'goodProgress' | 'needsBalance' | 'incompleteTracking';
+
+export function balanceLabel(score: number): BalanceLabelKey {
+  if (score >= 85) return 'balanced';
+  if (score >= 70) return 'goodProgress';
+  if (score >= 50) return 'needsBalance';
+  return 'incompleteTracking';
 }

@@ -218,7 +218,7 @@ export default function DailyDashboardPage() {
                       title={t('score', { score: data.balanceScore })}
                     >
                       <Sparkles className="h-3 w-3" />
-                      {data.balanceLabel || balanceLabelFn(data.balanceScore)}
+                      {t(data.balanceLabel || balanceLabelFn(data.balanceScore))}
                     </span>
                   </div>
                   <CalorieRing
