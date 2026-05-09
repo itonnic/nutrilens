@@ -21,8 +21,28 @@ async function bootstrap() {
     }),
   );
 
+  // CORS_ORIGINS supports two kinds of entries:
+  //   1. Exact origins  (e.g. `https://nutrilens-web.vercel.app`)
+  //   2. Wildcard hosts (e.g. `https://*.vercel.app`)
+  //
+  // The wildcard form is essential on Vercel because every preview deploy and
+  // every branch alias gets its own subdomain — listing them by hand would
+  // mean updating CORS on every push. The matcher only allows one wildcard
+  // per origin string, anchored to the start of the host (so an attacker
+  // can't sneak in via a suffix like `evil-vercel.app.attacker.com`).
+  const allowedOrigins = config.corsOrigins;
+  const exact = allowedOrigins.filter((o) => !o.includes('*'));
+  const patterns = allowedOrigins
+    .filter((o) => o.includes('*'))
+    .map((o) => new RegExp('^' + o.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^.]+') + '$'));
   app.enableCors({
-    origin: config.corsOrigins,
+    origin: (origin, cb) => {
+      // Allow tools like curl, server-to-server, or same-origin (no Origin header).
+      if (!origin) return cb(null, true);
+      if (exact.includes(origin)) return cb(null, true);
+      if (patterns.some((re) => re.test(origin))) return cb(null, true);
+      return cb(new Error(`CORS blocked: ${origin}`), false);
+    },
     credentials: true,
   });
 
