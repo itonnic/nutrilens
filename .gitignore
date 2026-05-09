@@ -6,14 +6,18 @@ dist
 out
 build
 coverage
+
+# Env files — never commit secrets. The repo only ships `.env.example`.
 .env
+.env.*
+!.env.example
 .env.local
 .env.*.local
+
 *.tsbuildinfo
 .DS_Store
 .vscode/*
 !.vscode/settings.json
 storage/local
 prisma/migrations/dev.db*
-.claude/scheduled_tasks.lock
 .claude/scheduled_tasks.lock
