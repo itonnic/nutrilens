@@ -372,7 +372,10 @@
     "couldNotDelete": "تعذّر الحذف",
     "aiConfidence": "ثقة الذكاء الاصطناعي: {percent}%",
     "aiSource": "مصدر الذكاء الاصطناعي",
-    "manualSource": "يدوي"
+    "manualSource": "يدوي",
+    "photoUnavailable": "الصورة غير متاحة",
+    "photoUnavailableDesc": "ما زالت الوجبة محفوظة. يمكنك مراجعة القيم الغذائية وإعادة التحليل عند رفع الصورة مرة أخرى.",
+    "nutritionTotalsHint": "القيم الغذائية هي إجماليات لكل صف وليست لكل 100 غرام."
   },
   "analytics": {
     "title": "الاقتراحات",

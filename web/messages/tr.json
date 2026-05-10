@@ -376,7 +376,10 @@
     "couldNotDelete": "Silinemedi",
     "aiConfidence": "Yapay zeka güveni: %{percent}",
     "aiSource": "Yapay zeka kaynağı",
-    "manualSource": "Manuel"
+    "manualSource": "Manuel",
+    "photoUnavailable": "Fotoğraf kullanılamıyor",
+    "photoUnavailableDesc": "Öğün hâlâ kayıtlı. Besin değerlerini inceleyebilir ve tekrar yükleyerek analiz ettirebilirsin.",
+    "nutritionTotalsHint": "Besin değerleri 100 g başına değil, her satırdaki toplam miktar içindir."
   },
   "analytics": {
     "title": "İçgörüler",

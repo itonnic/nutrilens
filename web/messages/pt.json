@@ -372,7 +372,10 @@
     "couldNotDelete": "Não foi possível excluir",
     "aiConfidence": "Confiança da IA: {percent}%",
     "aiSource": "Fonte IA",
-    "manualSource": "Manual"
+    "manualSource": "Manual",
+    "photoUnavailable": "Foto indisponível",
+    "photoUnavailableDesc": "A refeição continua salva. Você pode revisar os nutrientes e analisar novamente ao enviar outra foto.",
+    "nutritionTotalsHint": "Os valores nutricionais são totais por linha, não por 100 g."
   },
   "analytics": {
     "title": "Insights",

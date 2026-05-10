@@ -376,7 +376,10 @@
     "couldNotDelete": "Could not delete",
     "aiConfidence": "AI confidence: {percent}%",
     "aiSource": "AI source",
-    "manualSource": "Manual"
+    "manualSource": "Manual",
+    "photoUnavailable": "Photo unavailable",
+    "photoUnavailableDesc": "The meal is still saved. You can review nutrients and re-analyze if you upload again.",
+    "nutritionTotalsHint": "Nutrition values are totals for each item row, not per 100 g."
   },
   "analytics": {
     "title": "Insights",

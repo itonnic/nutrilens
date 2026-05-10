@@ -372,7 +372,10 @@
     "couldNotDelete": "削除できませんでした",
     "aiConfidence": "AI信頼度: {percent}%",
     "aiSource": "AIソース",
-    "manualSource": "手動"
+    "manualSource": "手動",
+    "photoUnavailable": "写真を表示できません",
+    "photoUnavailableDesc": "食事は保存されています。栄養情報を確認し、再アップロードすると再分析できます。",
+    "nutritionTotalsHint": "栄養値は100gあたりではなく、各行の合計値です。"
   },
   "analytics": {
     "title": "アドバイス",

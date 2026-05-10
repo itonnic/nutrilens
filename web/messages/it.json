@@ -372,7 +372,10 @@
     "couldNotDelete": "Impossibile eliminare",
     "aiConfidence": "Affidabilità IA: {percent}%",
     "aiSource": "Fonte IA",
-    "manualSource": "Manuale"
+    "manualSource": "Manuale",
+    "photoUnavailable": "Foto non disponibile",
+    "photoUnavailableDesc": "Il pasto è ancora salvato. Puoi controllare i nutrienti e rianalizzarlo caricando di nuovo la foto.",
+    "nutritionTotalsHint": "I valori nutrizionali sono totali per ogni riga, non per 100 g."
   },
   "analytics": {
     "title": "Suggerimenti",

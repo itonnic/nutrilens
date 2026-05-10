@@ -372,7 +372,10 @@
     "couldNotDelete": "Impossible de supprimer",
     "aiConfidence": "Confiance IA : {percent} %",
     "aiSource": "Source IA",
-    "manualSource": "Manuel"
+    "manualSource": "Manuel",
+    "photoUnavailable": "Photo indisponible",
+    "photoUnavailableDesc": "Le repas est toujours enregistré. Vous pouvez vérifier les nutriments et relancer l’analyse après un nouvel envoi.",
+    "nutritionTotalsHint": "Les valeurs nutritionnelles sont des totaux par ligne, pas pour 100 g."
   },
   "analytics": {
     "title": "Aperçus",

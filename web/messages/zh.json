@@ -372,7 +372,10 @@
     "couldNotDelete": "无法删除",
     "aiConfidence": "AI 置信度:{percent}%",
     "aiSource": "AI 来源",
-    "manualSource": "手动"
+    "manualSource": "手动",
+    "photoUnavailable": "照片不可用",
+    "photoUnavailableDesc": "餐食仍已保存。你可以检查营养数据，重新上传后再次分析。",
+    "nutritionTotalsHint": "营养值是每一行的总量，不是每 100 克。"
   },
   "analytics": {
     "title": "建议",

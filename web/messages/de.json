@@ -372,7 +372,10 @@
     "couldNotDelete": "Konnte nicht gelöscht werden",
     "aiConfidence": "KI-Vertrauen: {percent}%",
     "aiSource": "KI-Quelle",
-    "manualSource": "Manuell"
+    "manualSource": "Manuell",
+    "photoUnavailable": "Foto nicht verfügbar",
+    "photoUnavailableDesc": "Die Mahlzeit ist weiterhin gespeichert. Du kannst die Nährwerte prüfen und bei erneutem Upload neu analysieren.",
+    "nutritionTotalsHint": "Nährwerte gelten als Gesamtwerte pro Zeile, nicht pro 100 g."
   },
   "analytics": {
     "title": "Insights",

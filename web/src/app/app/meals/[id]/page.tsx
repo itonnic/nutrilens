@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
   CheckCircle2,
+  ImageOff,
   Plus,
   RotateCcw,
   Sparkles,
@@ -449,14 +450,7 @@ function NeedsReviewView({
       </div>
 
       <div className="card-soft overflow-hidden">
-        {meal.imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={meal.imageUrl}
-            alt={meal.title}
-            className="aspect-[4/3] w-full object-cover"
-          />
-        )}
+        <MealHeroImage imageUrl={meal.imageUrl} title={meal.title} />
         <div className="space-y-4 p-5">
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span>{tMealTypes(meal.mealType)}</span>
@@ -654,14 +648,7 @@ function ConfirmedView({
   return (
     <div className="space-y-5">
       <div className="card-soft overflow-hidden">
-        {meal.imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={meal.imageUrl}
-            alt={meal.title}
-            className="aspect-[4/3] w-full object-cover"
-          />
-        )}
+        <MealHeroImage imageUrl={meal.imageUrl} title={meal.title} />
         <div className="space-y-4 p-5">
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span>{tMealTypes(meal.mealType)}</span>
@@ -939,6 +926,42 @@ function TotalStat({
   );
 }
 
+function MealHeroImage({ imageUrl, title }: { imageUrl: string | null; title: string }) {
+  const t = useTranslations('mealDetail');
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    setFailed(false);
+  }, [imageUrl]);
+
+  const showFallback = !imageUrl || failed;
+
+  if (showFallback) {
+    return (
+      <div className="relative flex min-h-52 items-center justify-center overflow-hidden bg-gradient-to-br from-accent-lime/20 via-white to-accent-green/15 p-6 sm:min-h-64">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(112,180,80,0.16),transparent_28%),radial-gradient(circle_at_80%_0%,rgba(245,194,92,0.18),transparent_30%)]" />
+        <div className="relative max-w-sm text-center">
+          <div className="mx-auto grid h-14 w-14 place-items-center rounded-3xl bg-white/85 text-primary shadow-sm ring-1 ring-white/70">
+            <ImageOff className="h-6 w-6" />
+          </div>
+          <div className="mt-3 text-base font-semibold">{t('photoUnavailable')}</div>
+          <p className="mt-1 text-sm text-muted-foreground">{t('photoUnavailableDesc')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={imageUrl}
+      alt={title}
+      onError={() => setFailed(true)}
+      className="aspect-[16/10] max-h-[420px] w-full object-cover"
+    />
+  );
+}
+
 function ConfidencePill({ value }: { value: number }) {
   const t = useTranslations('mealDetail');
   const pct = Math.round(value * 100);
@@ -1099,6 +1122,7 @@ function EditableNutritionTable({
           {t('addRow')}
         </Button>
       </div>
+      <p className="text-sm text-muted-foreground">{t('nutritionTotalsHint')}</p>
       {items.length === 0 && (
         <div className="rounded-2xl border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
           {t('noItemsYet')}
