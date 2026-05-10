@@ -449,7 +449,8 @@
     "weekdaySat": "C",
     "weekdaySun": "P",
     "heatmapTooltipTracked": "{date} · {kcal} kcal · skor {score}",
-    "heatmapTooltipNoData": "{date} · veri yok"
+    "heatmapTooltipNoData": "{date} · veri yok",
+    "confirmedOnlyHint": "İçgörüler yalnızca onaylanmış öğünleri içerir. İnceleme bekleyen öğünler, onayladıktan sonra trendlere eklenir."
   },
   "profile": {
     "title": "Profil ve ayarlar",

@@ -445,7 +445,8 @@
     "weekdaySat": "土",
     "weekdaySun": "日",
     "heatmapTooltipTracked": "{date} · {kcal} kcal · スコア {score}",
-    "heatmapTooltipNoData": "{date} · データなし"
+    "heatmapTooltipNoData": "{date} · データなし",
+    "confirmedOnlyHint": "インサイトには確認済みの食事のみが含まれます。レビュー待ちの食事は、確認後にトレンドへ反映されます。"
   },
   "profile": {
     "title": "プロフィールと設定",

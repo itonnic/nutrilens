@@ -445,7 +445,8 @@
     "weekdaySat": "S",
     "weekdaySun": "S",
     "heatmapTooltipTracked": "{date} · {kcal} kcal · Score {score}",
-    "heatmapTooltipNoData": "{date} · keine Daten"
+    "heatmapTooltipNoData": "{date} · keine Daten",
+    "confirmedOnlyHint": "Insights enthalten nur bestätigte Mahlzeiten. Mahlzeiten in Prüfung erscheinen erst nach deiner Bestätigung in den Trends."
   },
   "profile": {
     "title": "Profil und Einstellungen",

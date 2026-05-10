@@ -445,7 +445,8 @@
     "weekdaySat": "六",
     "weekdaySun": "日",
     "heatmapTooltipTracked": "{date} · {kcal} 千卡 · 评分 {score}",
-    "heatmapTooltipNoData": "{date} · 无数据"
+    "heatmapTooltipNoData": "{date} · 无数据",
+    "confirmedOnlyHint": "洞察仅包含已确认的餐食。等待审核的餐食会在确认后显示到趋势中。"
   },
   "profile": {
     "title": "个人资料与设置",

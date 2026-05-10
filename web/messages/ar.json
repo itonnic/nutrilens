@@ -445,7 +445,8 @@
     "weekdaySat": "س",
     "weekdaySun": "ح",
     "heatmapTooltipTracked": "{date} · {kcal} سعرة · درجة {score}",
-    "heatmapTooltipNoData": "{date} · لا بيانات"
+    "heatmapTooltipNoData": "{date} · لا بيانات",
+    "confirmedOnlyHint": "تتضمن الرؤى الوجبات المؤكدة فقط. تظهر الوجبات بانتظار المراجعة في الاتجاهات بعد تأكيدها."
   },
   "profile": {
     "title": "الملف الشخصي والإعدادات",

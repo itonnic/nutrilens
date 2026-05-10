@@ -445,7 +445,8 @@
     "weekdaySat": "S",
     "weekdaySun": "D",
     "heatmapTooltipTracked": "{date} · {kcal} kcal · puntaje {score}",
-    "heatmapTooltipNoData": "{date} · sin datos"
+    "heatmapTooltipNoData": "{date} · sin datos",
+    "confirmedOnlyHint": "Las estadísticas incluyen solo comidas confirmadas. Las comidas pendientes de revisión aparecen en las tendencias después de confirmarlas."
   },
   "profile": {
     "title": "Perfil y ajustes",

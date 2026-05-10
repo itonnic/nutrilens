@@ -449,7 +449,8 @@
     "weekdaySat": "S",
     "weekdaySun": "S",
     "heatmapTooltipTracked": "{date} · {kcal} kcal · score {score}",
-    "heatmapTooltipNoData": "{date} · no data"
+    "heatmapTooltipNoData": "{date} · no data",
+    "confirmedOnlyHint": "Insights include confirmed meals only. Meals waiting for review appear in trends after you confirm them."
   },
   "profile": {
     "title": "Profile and settings",

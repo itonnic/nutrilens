@@ -445,7 +445,8 @@
     "weekdaySat": "S",
     "weekdaySun": "D",
     "heatmapTooltipTracked": "{date} · {kcal} kcal · score {score}",
-    "heatmapTooltipNoData": "{date} · aucune donnée"
+    "heatmapTooltipNoData": "{date} · aucune donnée",
+    "confirmedOnlyHint": "Les analyses incluent uniquement les repas confirmés. Les repas en attente de vérification apparaissent dans les tendances après confirmation."
   },
   "profile": {
     "title": "Profil et paramètres",

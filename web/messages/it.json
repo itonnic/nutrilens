@@ -445,7 +445,8 @@
     "weekdaySat": "S",
     "weekdaySun": "D",
     "heatmapTooltipTracked": "{date} · {kcal} kcal · punteggio {score}",
-    "heatmapTooltipNoData": "{date} · nessun dato"
+    "heatmapTooltipNoData": "{date} · nessun dato",
+    "confirmedOnlyHint": "Le analisi includono solo i pasti confermati. I pasti in attesa di revisione compaiono nei trend dopo la conferma."
   },
   "profile": {
     "title": "Profilo e impostazioni",

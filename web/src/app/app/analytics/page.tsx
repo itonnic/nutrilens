@@ -79,6 +79,9 @@ export default function AnalyticsPage() {
           <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
             {t('yourTrends')}
           </h1>
+          <p className="max-w-2xl text-sm text-muted-foreground">
+            {t('confirmedOnlyHint')}
+          </p>
         </header>
 
         <Tabs defaultValue="weekly" className="flex flex-col gap-6">
