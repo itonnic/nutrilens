@@ -35,7 +35,10 @@
     "skip": "Atla",
     "done": "Tamam",
     "estimate": "Tahmin",
-    "estimateNotMedical": "Beslenme değerleri tahmindir ve tıbbi tavsiye yerine geçmez."
+    "estimateNotMedical": "Beslenme değerleri tahmindir ve tıbbi tavsiye yerine geçmez.",
+    "aiRateLimitTitle": "AI limiti doldu",
+    "aiRateLimitDesc": "AI şu anda rate limitte. Lütfen 1 dakika bekleyip tekrar dene.",
+    "aiUnavailableDesc": "AI servisine şu anda ulaşılamıyor. Lütfen birazdan tekrar dene."
   },
   "nav": {
     "today": "Bugün",
@@ -280,7 +283,8 @@
     "imageTooLarge": "Görsel 10MB veya daha küçük olmalı.",
     "uploadFailed": "Yükleme başarısız",
     "duplicateDetected": "Aynı görsel kısa süre önce yüklendi",
-    "duplicateOpening": "Daha önce kaydettiğin öğün açılıyor."
+    "duplicateOpening": "Daha önce kaydettiğin öğün açılıyor.",
+    "readyToAnalyze": "Analize hazır"
   },
   "mealDetail": {
     "loading": "Öğün yükleniyor…",

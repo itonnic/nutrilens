@@ -7,10 +7,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Camera,
   ChevronRight,
+  Droplets,
+  Flame,
   Loader2,
   Plus,
   Scale,
   Sparkles,
+  Target,
+  UtensilsCrossed,
+  type LucideIcon,
 } from 'lucide-react';
 import { balanceLabel as balanceLabelFn } from '@nutrilens/shared';
 import type { WeightEntryResponse } from '@nutrilens/shared';
@@ -38,15 +43,32 @@ import {
 import { useToast } from '@/components/ui/toaster';
 import { cn, formatKcal, isoDate } from '@/lib/utils';
 
-function balancePillStyle(score: number): string {
-  if (score >= 85) return 'bg-primary/15 text-primary';
-  if (score >= 70) return 'bg-accent-yellow/30 text-amber-800';
-  if (score >= 50) return 'bg-accent-orange/25 text-orange-800';
-  return 'bg-muted text-muted-foreground';
-}
-
 function CardSkeleton({ className }: { className?: string }) {
   return <div className={cn('card-soft p-6 skeleton h-40', className)} />;
+}
+
+function MiniMetric({
+  icon: Icon,
+  label,
+  value,
+  tone = 'bg-white/70 text-foreground',
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+  tone?: string;
+}) {
+  return (
+    <div className="rounded-[1.4rem] border border-white/70 bg-white/65 p-3 shadow-[0_12px_28px_rgba(24,38,30,0.08)] backdrop-blur-sm">
+      <div className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground">
+        <span className={cn('grid h-7 w-7 place-items-center rounded-full', tone)}>
+          <Icon className="h-3.5 w-3.5" />
+        </span>
+        {label}
+      </div>
+      <div className="mt-2 text-lg font-semibold tracking-tight tabular-nums">{value}</div>
+    </div>
+  );
 }
 
 export default function DailyDashboardPage() {
@@ -148,23 +170,30 @@ export default function DailyDashboardPage() {
 
   return (
     <AppShell>
-      <section className="flex flex-col gap-6">
+      <section className="flex flex-col gap-5 md:gap-6">
         {/* Greeting + date switcher */}
-        <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">{dayLabel}</p>
-            <h1 className="mt-0.5 text-2xl font-semibold tracking-tight md:text-3xl">
-              {greeting}
-            </h1>
+        <header className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(255,255,255,.9),rgba(232,255,221,.72)_48%,rgba(255,232,201,.66))] p-5 shadow-[0_22px_60px_rgba(24,38,30,0.12)] backdrop-blur-xl md:p-6">
+          <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-accent-lime/45 blur-2xl" />
+          <div className="pointer-events-none absolute -bottom-16 left-10 h-32 w-32 rounded-full bg-accent-purple/20 blur-2xl" />
+          <div className="relative flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                {dayLabel}
+              </p>
+              <h1 className="mt-3 max-w-sm text-3xl font-semibold leading-tight tracking-tight md:text-4xl">
+                {greeting}
+              </h1>
+            </div>
+            <DateSwitcher
+              isToday={isToday}
+              onPrev={() => shiftDay(-1)}
+              onNext={() => shiftDay(1)}
+              onToday={jumpToToday}
+              canGoForward={!isToday}
+              label={isToday ? tCommon('today') : dayLabel}
+            />
           </div>
-          <DateSwitcher
-            isToday={isToday}
-            onPrev={() => shiftDay(-1)}
-            onNext={() => shiftDay(1)}
-            onToday={jumpToToday}
-            canGoForward={!isToday}
-            label={isToday ? tCommon('today') : dayLabel}
-          />
         </header>
 
         {queryError && (
@@ -198,13 +227,16 @@ export default function DailyDashboardPage() {
             ) : data ? (
               <>
                 {/* Calorie ring card */}
-                <div className="card-soft flex flex-col items-center gap-4 overflow-hidden bg-gradient-to-br from-accent-green/20 via-white to-accent-lime/30 p-6">
-                  <div className="flex w-full items-center justify-between">
+                <div className="card-soft relative flex flex-col items-center gap-5 overflow-hidden bg-[linear-gradient(155deg,rgba(23,32,25,.98),rgba(8,189,132,.84)_55%,rgba(184,233,134,.74))] p-5 text-white shadow-[0_26px_70px_rgba(8,80,56,0.28)] md:p-6">
+                  <div className="pointer-events-none absolute -right-12 top-4 h-36 w-36 rounded-full bg-white/18 blur-2xl" />
+                  <div className="pointer-events-none absolute -bottom-20 -left-10 h-40 w-40 rounded-full bg-accent-yellow/25 blur-2xl" />
+                  <div className="relative flex w-full items-start justify-between gap-3">
                     <div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1 text-xs font-medium text-white/75 ring-1 ring-white/15">
+                        <Flame className="h-3.5 w-3.5 text-accent-yellow" />
                         {tOnboarding('calories')}
                       </div>
-                      <div className="text-lg font-semibold">
+                      <div className="mt-3 text-2xl font-semibold leading-tight tracking-tight">
                         {t('consumed', {
                           calories: formatKcal(data.totals.calories, locale),
                         })}
@@ -212,28 +244,48 @@ export default function DailyDashboardPage() {
                     </div>
                     <span
                       className={cn(
-                        'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium',
-                        balancePillStyle(data.balanceScore),
+                        'inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white/14 px-3 py-1.5 text-xs font-semibold text-white shadow-sm ring-1 ring-white/15',
                       )}
                       title={t('score', { score: data.balanceScore })}
                     >
-                      <Sparkles className="h-3 w-3" />
+                      <Sparkles className="h-3.5 w-3.5 text-accent-lime" />
                       {t(data.balanceLabel || balanceLabelFn(data.balanceScore))}
                     </span>
                   </div>
                   <CalorieRing
                     consumed={data.totals.calories}
                     target={data.targets.dailyCalories}
-                    size={200}
+                    size={210}
+                    className="relative [&_*]:text-white"
                   />
-                  <div className="flex w-full items-center justify-between text-xs text-muted-foreground">
-                    <span className="rounded-full bg-white/70 px-3 py-1 tabular-nums shadow-sm">
-                      {t('remaining', {
+                  <div className="relative grid w-full grid-cols-3 gap-2">
+                    <MiniMetric
+                      icon={Target}
+                      label={t('remaining', {
                         kcal: Math.max(0, Math.round(data.remaining.calories)),
                       })}
-                    </span>
+                      value={`${Math.round((data.totals.calories / Math.max(data.targets.dailyCalories, 1)) * 100)}%`}
+                      tone="bg-accent-lime/25 text-accent-lime"
+                    />
+                    <MiniMetric
+                      icon={UtensilsCrossed}
+                      label={t('todaysMeals')}
+                      value={`${data.meals.length}`}
+                      tone="bg-white/15 text-white"
+                    />
+                    <MiniMetric
+                      icon={Droplets}
+                      label={tOnboarding('water')}
+                      value={`${Math.round(data.totals.waterMl / 1000)}L`}
+                      tone="bg-accent-blue/25 text-accent-blue"
+                    />
+                  </div>
+                  <div className="relative flex w-full items-center justify-between rounded-2xl bg-white/12 px-4 py-3 text-xs text-white/78 ring-1 ring-white/15">
                     <span className="tabular-nums">
                       {t('score', { score: data.balanceScore })}
+                    </span>
+                    <span className="font-medium text-white">
+                      / {formatKcal(data.targets.dailyCalories, locale)} kcal
                     </span>
                   </div>
                 </div>

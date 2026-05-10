@@ -20,9 +20,16 @@ export function WaterTracker({ date, targetMl, consumedMl }: Props) {
   });
 
   const add = useMutation({
-    mutationFn: (amountMl: number) => api.addWater({ amountMl }),
+    mutationFn: (amountMl: number) =>
+      api.addWater({
+        amountMl,
+        // Water is added for the day currently shown in the tracker. Without this,
+        // adding water while viewing yesterday/another date stores it under "now",
+        // so the selected day's dashboard does not update.
+        loggedAt: new Date(date).toISOString(),
+      }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['water'] });
+      qc.invalidateQueries({ queryKey: ['water', dateKey] });
       qc.invalidateQueries({ queryKey: ['daily'] });
     },
   });

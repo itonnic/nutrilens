@@ -25,14 +25,36 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    touch-action: pan-y;
   }
 
   body {
+    min-height: 100svh;
     background-image:
       radial-gradient(circle at 8% -10%, rgba(184, 233, 134, 0.45), transparent 40%),
       radial-gradient(circle at 95% 5%, rgba(255, 159, 110, 0.32), transparent 45%),
       radial-gradient(circle at 50% 110%, rgba(167, 139, 250, 0.25), transparent 55%);
     background-attachment: fixed;
+  }
+
+  @media (max-width: 767px) {
+    input,
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
+  }
+
+  @supports (-webkit-touch-callout: none) {
+    body {
+      background-attachment: scroll;
+    }
   }
 }
 

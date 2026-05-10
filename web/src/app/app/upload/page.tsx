@@ -5,7 +5,15 @@ import NextImage from 'next/image';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/routing';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Camera, RotateCcw, Sparkles, Upload as UploadIcon, X } from 'lucide-react';
+import {
+  Camera,
+  CheckCircle2,
+  ImagePlus,
+  RotateCcw,
+  Sparkles,
+  Upload as UploadIcon,
+  X,
+} from 'lucide-react';
 import { MEAL_TYPES, type MealType } from '@nutrilens/shared';
 import { AppShell } from '@/components/app/app-shell';
 import { AiAnalysisLoader } from '@/components/app/ai-loader';
@@ -26,6 +34,33 @@ type UploadPhase =
 
 const MAX_BYTES = 10 * 1024 * 1024;
 const ACCEPTED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp']);
+
+function humanizeAiError(
+  errOrMessage: unknown,
+  tCommon: ReturnType<typeof useTranslations<'common'>>,
+  fallback: string,
+) {
+  if (errOrMessage instanceof ApiError && errOrMessage.status === 429) {
+    return { title: tCommon('aiRateLimitTitle'), description: tCommon('aiRateLimitDesc') };
+  }
+
+  const message = typeof errOrMessage === 'string'
+    ? errOrMessage
+    : errOrMessage instanceof Error
+      ? errOrMessage.message
+      : fallback;
+  const haystack = message.toLowerCase();
+
+  if (haystack.includes('rate limit') || haystack.includes('quota')) {
+    return { title: tCommon('aiRateLimitTitle'), description: tCommon('aiRateLimitDesc') };
+  }
+
+  if (haystack.includes('temporarily unavailable') || haystack.includes('service unavailable')) {
+    return { title: fallback, description: tCommon('aiUnavailableDesc') };
+  }
+
+  return { title: fallback, description: message };
+}
 
 export default function UploadPage() {
   const router = useRouter();
@@ -148,8 +183,8 @@ export default function UploadPage() {
         }
         return;
       }
-      const msg = err instanceof Error ? err.message : t('uploadFailed');
-      toast({ title: t('uploadFailed'), description: msg, variant: 'error' });
+      const friendly = humanizeAiError(err, tCommon, t('uploadFailed'));
+      toast({ title: friendly.title, description: friendly.description, variant: 'error' });
     },
   });
 
@@ -165,8 +200,8 @@ export default function UploadPage() {
       });
     },
     onError: (err) => {
-      const msg = err instanceof Error ? err.message : t('analysisFailed');
-      toast({ title: t('analysisFailed'), description: msg, variant: 'error' });
+      const friendly = humanizeAiError(err, tCommon, t('analysisFailed'));
+      toast({ title: friendly.title, description: friendly.description, variant: 'error' });
     },
   });
 
@@ -194,11 +229,12 @@ export default function UploadPage() {
     if (job.status === 'COMPLETED') {
       router.push(`/app/meals/${phase.mealId}?fromUpload=1`);
     } else if (job.status === 'FAILED') {
+      const friendly = humanizeAiError(job.errorMessage ?? t('analysisFailed'), tCommon, t('analysisFailed'));
       setPhase({
         kind: 'failed',
         previewUrl: phase.previewUrl,
         mealId: phase.mealId,
-        errorMessage: job.errorMessage ?? t('analysisFailed'),
+        errorMessage: friendly.description,
       });
     }
   }, [jobQuery.data, phase, router, t]);
@@ -224,11 +260,24 @@ export default function UploadPage() {
   return (
     <AppShell>
       <div className="mx-auto max-w-2xl space-y-5">
-        <header className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t('subtitle')}
-          </p>
+        <header className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(23,32,25,.96),rgba(8,189,132,.78)_58%,rgba(184,233,134,.76))] p-5 text-white shadow-[0_24px_70px_rgba(8,80,56,0.24)] md:p-6">
+          <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-white/15 blur-2xl" />
+          <div className="pointer-events-none absolute -bottom-16 left-8 h-32 w-32 rounded-full bg-accent-yellow/25 blur-2xl" />
+          <div className="relative flex items-start gap-4">
+            <span className="grid h-[3.25rem] w-[3.25rem] place-items-center rounded-[1.35rem] bg-white/14 text-accent-lime ring-1 ring-white/15">
+              <ImagePlus className="h-6 w-6" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="inline-flex items-center gap-1.5 rounded-full bg-white/12 px-3 py-1 text-xs font-semibold text-white/75 ring-1 ring-white/15">
+                <Sparkles className="h-3.5 w-3.5 text-accent-lime" />
+                AI
+              </p>
+              <h1 className="mt-3 text-3xl font-semibold leading-tight tracking-tight">{t('title')}</h1>
+              <p className="mt-1 max-w-sm text-sm text-white/72">
+                {t('subtitle')}
+              </p>
+            </div>
+          </div>
         </header>
 
         {phase.kind === 'empty' && (
@@ -245,25 +294,37 @@ export default function UploadPage() {
         )}
 
         {phase.kind === 'selected' && (
-          <div className="card-soft overflow-hidden bg-gradient-to-br from-accent-lime/20 via-white to-accent-green/15">
+          <div className="card-soft overflow-hidden border-white/75 bg-[linear-gradient(145deg,rgba(255,255,255,.96),rgba(232,255,221,.76),rgba(255,241,219,.72))] shadow-[0_24px_70px_rgba(24,38,30,0.14)]">
             <div className="relative aspect-[4/3] w-full bg-muted">
               {previewSrc && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={previewSrc} alt="meal preview" className="h-full w-full object-cover" />
               )}
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/35 to-transparent" />
+              <div className="absolute left-3 top-3 inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-foreground shadow-soft backdrop-blur">
+                <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                {t('readyToAnalyze')}
+              </div>
               <button
                 type="button"
                 onClick={reset}
                 aria-label={t('removeImage')}
-                className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-foreground/70 text-white backdrop-blur transition hover:bg-foreground"
+                className="absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-full bg-black/45 text-white ring-1 ring-white/25 backdrop-blur transition hover:bg-black/70"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <div className="p-5">
-              <div className="text-xs text-muted-foreground">
-                {phase.file.name} · {(phase.file.size / 1024 / 1024).toFixed(1)} MB
+            <div className="flex items-center justify-between gap-3 p-5">
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold">{phase.file.name}</div>
+                <div className="mt-0.5 text-xs text-muted-foreground">
+                  {(phase.file.size / 1024 / 1024).toFixed(1)} MB · JPG/PNG/WebP
+                </div>
               </div>
+              <Button type="button" variant="secondary" size="sm" onClick={reset}>
+                <RotateCcw className="h-3.5 w-3.5" />
+                {t('startOver')}
+              </Button>
             </div>
           </div>
         )}
@@ -392,13 +453,15 @@ function EmptyUploadCard({
         onDragLeave={() => setDragActive(false)}
         onDrop={onDrop}
         className={cn(
-          'block cursor-pointer overflow-hidden rounded-3xl border-2 border-dashed p-10 text-center transition',
+          'group relative block cursor-pointer overflow-hidden rounded-[2rem] border p-4 text-center shadow-[0_22px_60px_rgba(24,38,30,0.12)] transition active:scale-[0.99]',
           dragActive
-            ? 'border-primary bg-gradient-to-br from-accent-green/25 via-white to-accent-lime/30 shadow-soft'
-            : 'border-accent-purple/30 bg-gradient-to-br from-accent-purple/10 via-white to-accent-lime/15 hover:-translate-y-0.5 hover:border-accent-purple/50',
+            ? 'border-primary bg-[linear-gradient(145deg,rgba(232,255,221,.95),rgba(255,255,255,.92),rgba(184,233,134,.38))]'
+            : 'border-white/75 bg-[linear-gradient(145deg,rgba(255,255,255,.96),rgba(243,234,255,.62),rgba(232,255,221,.58))] hover:-translate-y-0.5',
         )}
       >
-        <div className="mx-auto mb-5 max-w-xs overflow-hidden rounded-[1.75rem] border border-white/70 bg-white/80 p-2 shadow-soft">
+        <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-accent-lime/35 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-16 left-8 h-36 w-36 rounded-full bg-accent-purple/20 blur-2xl" />
+        <div className="relative mx-auto mb-5 max-w-xs overflow-hidden rounded-[1.75rem] border border-white/70 bg-white/80 p-2 shadow-soft">
           <NextImage
             src="/images/nutrilens-upload-empty.png"
             alt=""
@@ -406,11 +469,20 @@ function EmptyUploadCard({
             width={1254}
             height={1254}
             sizes="(min-width: 768px) 320px, calc(100vw - 96px)"
-            className="aspect-square w-full rounded-[1.35rem] object-cover"
+            className="aspect-square w-full rounded-[1.35rem] object-cover transition duration-500 group-hover:scale-[1.03]"
           />
+          <div className="absolute inset-x-4 bottom-4 rounded-2xl bg-white/86 px-4 py-3 text-left shadow-soft backdrop-blur">
+            <div className="flex items-center gap-2 text-sm font-semibold">
+              <Sparkles className="h-4 w-4 text-primary" />
+              {t('dropTitle')}
+            </div>
+            <div className="mt-1 text-xs text-muted-foreground">
+              JPEG/PNG/WebP · 10MB
+            </div>
+          </div>
         </div>
-        <div className="mt-4 font-semibold">{t('dropTitle')}</div>
-        <div className="text-sm text-muted-foreground">
+        <div className="relative mt-4 text-xl font-semibold tracking-tight">{t('dropTitle')}</div>
+        <div className="relative mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
           {t('dropSubtitle')}
         </div>
       </label>

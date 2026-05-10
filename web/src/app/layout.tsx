@@ -57,6 +57,10 @@ export const viewport: Viewport = {
   themeColor: '#F8F7F2',
   width: 'device-width',
   initialScale: 1,
+  minimumScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -69,7 +73,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning>
-      <body className={`${geist.variable} font-sans`}>
+      <body className={`${geist.variable} overflow-x-hidden font-sans`}>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <Providers>{children}</Providers>
           <Toaster />

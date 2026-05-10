@@ -100,8 +100,6 @@ export class DashboardService {
     };
 
     const score = calculateBalanceScore({ totals, targets: targetsOut });
-    const insight = this.insights.daily(totals, targetsOut, locale);
-
     // also include unconfirmed meals (DRAFT/NEEDS_REVIEW) so the user sees them — but they don't count in totals
     const unconfirmed = await this.prisma.meal.findMany({
       where: { userId, consumedAt: { gte: start, lt: end }, status: { in: ['DRAFT', 'NEEDS_REVIEW'] } },
@@ -112,6 +110,12 @@ export class DashboardService {
     const allMeals: MealResponse[] = [...meals, ...unconfirmed]
       .sort((a, b) => a.consumedAt.getTime() - b.consumedAt.getTime())
       .map((m) => mealToResponse(m));
+
+    // If only draft/review meals exist, avoid showing the contradictory
+    // "no meals logged" insight while the pending meal is visibly listed.
+    const insight = meals.length === 0 && allMeals.length > 0
+      ? null
+      : this.insights.daily(totals, targetsOut, locale);
 
     return {
       date: start.toISOString().slice(0, 10),

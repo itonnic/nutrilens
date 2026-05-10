@@ -118,6 +118,33 @@ function emptyItem(): EditableItem {
   };
 }
 
+function humanizeAiError(
+  errOrMessage: unknown,
+  tCommon: ReturnType<typeof useTranslations>,
+  fallbackTitle: string,
+) {
+  if (errOrMessage instanceof ApiError && errOrMessage.status === 429) {
+    return { title: tCommon('aiRateLimitTitle'), description: tCommon('aiRateLimitDesc') };
+  }
+
+  const message = typeof errOrMessage === 'string'
+    ? errOrMessage
+    : errOrMessage instanceof Error
+      ? errOrMessage.message
+      : fallbackTitle;
+  const haystack = message.toLowerCase();
+
+  if (haystack.includes('rate limit') || haystack.includes('quota')) {
+    return { title: tCommon('aiRateLimitTitle'), description: tCommon('aiRateLimitDesc') };
+  }
+
+  if (haystack.includes('temporarily unavailable') || haystack.includes('service unavailable')) {
+    return { title: fallbackTitle, description: tCommon('aiUnavailableDesc') };
+  }
+
+  return { title: fallbackTitle, description: message };
+}
+
 export default function MealDetailPage() {
   const params = useParams<{ id: string }>();
   const mealId = params.id;
@@ -268,11 +295,13 @@ function NeedsReviewView({
   const { toast } = useToast();
   const qc = useQueryClient();
   const t = useTranslations('mealDetail');
+  const tCommon = useTranslations('common');
   const tMealTypes = useTranslations('mealTypes');
   const [title, setTitle] = useState(meal.title);
   const [items, setItems] = useState<EditableItem[]>(meal.items.map(toEditable));
   const [reanalyzeOpen, setReanalyzeOpen] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [aiJobId, setAiJobId] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   // Sync local state when remote meal changes (e.g., re-analysis completes)
@@ -338,8 +367,9 @@ function NeedsReviewView({
 
   const reanalyzeMutation = useMutation({
     mutationFn: (note: string) => api.reanalyze(meal.id, note || undefined),
-    onSuccess: () => {
+    onSuccess: (data) => {
       setReanalyzeOpen(false);
+      setAiJobId(data.jobId);
       setAnalyzing(true);
       toast({
         title: t('reanalyzingToast'),
@@ -347,26 +377,45 @@ function NeedsReviewView({
       });
     },
     onError: (err) => {
-      const msg = err instanceof Error ? err.message : t('reanalyzeFailed');
-      toast({ title: t('reanalyzeFailed'), description: msg, variant: 'error' });
+      const friendly = humanizeAiError(err, tCommon, t('reanalyzeFailed'));
+      toast({ title: friendly.title, description: friendly.description, variant: 'error' });
     },
   });
 
-  // While re-analysis is running, poll meal until updatedAt changes
   useQuery({
-    queryKey: ['meal-poll', meal.id, analyzing],
-    queryFn: async () => {
-      const next = await api.getMeal(meal.id);
-      if (next.updatedAt !== meal.updatedAt) {
-        qc.setQueryData(['meal', meal.id], next);
-        setAnalyzing(false);
-      }
-      return next;
+    queryKey: ['meal-ai-job', meal.id, aiJobId],
+    queryFn: () => api.getAiJob(aiJobId as string),
+    enabled: analyzing && Boolean(aiJobId),
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      if (status === 'COMPLETED' || status === 'FAILED') return false;
+      return 1500;
     },
-    enabled: analyzing,
-    refetchInterval: 2000,
     refetchIntervalInBackground: true,
   });
+
+  useEffect(() => {
+    if (!analyzing || !aiJobId) return;
+
+    void api.getAiJob(aiJobId).then((job) => {
+      if (job.status === 'COMPLETED') {
+        setAnalyzing(false);
+        setAiJobId(null);
+        onUpdate();
+        void qc.invalidateQueries({ queryKey: ['meal', meal.id] });
+        return;
+      }
+
+      if (job.status === 'FAILED') {
+        const friendly = humanizeAiError(job.errorMessage ?? t('reanalyzeFailed'), tCommon, t('reanalyzeFailed'));
+        setAnalyzing(false);
+        setAiJobId(null);
+        toast({ title: friendly.title, description: friendly.description, variant: 'error' });
+        onUpdate();
+        void qc.invalidateQueries({ queryKey: ['meal', meal.id] });
+      }
+    });
+  }, [aiJobId, analyzing, meal.id, onUpdate, qc, t, tCommon, toast]);
 
   const deleteMutation = useDeleteMeal(meal.id, onDeleted);
 
@@ -524,35 +573,55 @@ function ConfirmedView({
   const [editing, setEditing] = useState(false);
   const [reanalyzeOpen, setReanalyzeOpen] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [aiJobId, setAiJobId] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const qc = useQueryClient();
 
   const reanalyzeMutation = useMutation({
     mutationFn: (note: string) => api.reanalyze(meal.id, note || undefined),
-    onSuccess: () => {
+    onSuccess: (data) => {
       setReanalyzeOpen(false);
+      setAiJobId(data.jobId);
       setAnalyzing(true);
     },
     onError: (err) => {
-      const msg = err instanceof Error ? err.message : t('reanalyzeFailed');
-      toast({ title: t('reanalyzeFailed'), description: msg, variant: 'error' });
+      const friendly = humanizeAiError(err, tCommon, t('reanalyzeFailed'));
+      toast({ title: friendly.title, description: friendly.description, variant: 'error' });
     },
   });
 
   useQuery({
-    queryKey: ['meal-poll', meal.id, analyzing],
-    queryFn: async () => {
-      const next = await api.getMeal(meal.id);
-      if (next.updatedAt !== meal.updatedAt) {
-        qc.setQueryData(['meal', meal.id], next);
-        setAnalyzing(false);
-      }
-      return next;
+    queryKey: ['meal-ai-job', meal.id, aiJobId],
+    queryFn: () => api.getAiJob(aiJobId as string),
+    enabled: analyzing && Boolean(aiJobId),
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      if (status === 'COMPLETED' || status === 'FAILED') return false;
+      return 1500;
     },
-    enabled: analyzing,
-    refetchInterval: 2000,
     refetchIntervalInBackground: true,
   });
+
+  useEffect(() => {
+    if (!analyzing || !aiJobId) return;
+
+    void api.getAiJob(aiJobId).then((job) => {
+      if (job.status === 'COMPLETED') {
+        setAnalyzing(false);
+        setAiJobId(null);
+        void qc.invalidateQueries({ queryKey: ['meal', meal.id] });
+        return;
+      }
+
+      if (job.status === 'FAILED') {
+        const friendly = humanizeAiError(job.errorMessage ?? t('reanalyzeFailed'), tCommon, t('reanalyzeFailed'));
+        setAnalyzing(false);
+        setAiJobId(null);
+        toast({ title: friendly.title, description: friendly.description, variant: 'error' });
+        void qc.invalidateQueries({ queryKey: ['meal', meal.id] });
+      }
+    });
+  }, [aiJobId, analyzing, meal.id, qc, t, tCommon, toast]);
 
   const deleteMutation = useDeleteMeal(meal.id, onDeleted);
 

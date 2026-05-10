@@ -5,7 +5,6 @@ import type { MealAnalysisResult } from '@nutrilens/shared';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { ANALYZER_TOKEN, MealVisionAnalyzer } from './types';
-import { MockMealAnalyzer } from './mock-analyzer';
 
 export const MEAL_ANALYSIS_QUEUE = 'meal-analysis';
 
@@ -29,7 +28,6 @@ export interface MealAnalysisJobData {
 @Processor(MEAL_ANALYSIS_QUEUE, { concurrency: 2 })
 export class AiAnalysisProcessor extends WorkerHost {
   private readonly logger = new Logger(AiAnalysisProcessor.name);
-  private readonly fallback = new MockMealAnalyzer();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -71,37 +69,23 @@ export class AiAnalysisProcessor extends WorkerHost {
     const analyzerInput = { imageUrl, imageBuffer, imageMime, userNote, mealType, locale };
 
     try {
-      // Primary analyzer (OpenAI in prod, Mock when AI_PROVIDER=mock).
+      // Primary analyzer (OpenAI/Gemini in prod, Mock only when AI_PROVIDER=mock).
       const result = await this.analyzer.analyzeMeal(analyzerInput);
       await this.persistResult(jobId, mealId, result, this.analyzer.name);
       this.logger.log(`Job ${jobId} completed via ${this.analyzer.name}`);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error';
-      this.logger.error(`Primary analyzer (${this.analyzer.name}) failed for ${jobId}: ${message}`);
+      const rawMessage = err instanceof Error ? err.message : 'Unknown error';
+      const publicMessage = this.toPublicErrorMessage(err);
+      this.logger.error(
+        `Analyzer (${this.analyzer.name}) failed for ${jobId}: ${rawMessage} -> ${publicMessage}`,
+      );
 
-      // If the primary is OpenAI and it failed (rate limit, network, bad key,
-      // model error...), fall back to the deterministic mock so the user
-      // never sees an empty meal. The persisted `aiRawJson._fallback` flag
-      // makes the soft-failure auditable.
-      if (this.analyzer.name !== 'mock') {
-        try {
-          this.logger.warn(`Falling back to mock analyzer for ${jobId}`);
-          const result = await this.fallback.analyzeMeal(analyzerInput);
-          await this.persistResult(jobId, mealId, result, 'mock-fallback', message);
-          return;
-        } catch (fallbackErr) {
-          const fbMsg =
-            fallbackErr instanceof Error ? fallbackErr.message : 'Mock fallback also failed';
-          this.logger.error(`Fallback also failed for ${jobId}: ${fbMsg}`);
-        }
-      }
-
-      // Both failed: mark the job FAILED and the meal NEEDS_REVIEW so the
-      // user can manually fill it in.
+      // No silent mock fallback: surface the real AI failure to the UI so the
+      // user knows whether they hit a provider rate limit, quota, or outage.
       await this.prisma.$transaction([
         this.prisma.aiAnalysisJob.update({
           where: { id: jobId },
-          data: { status: 'FAILED', errorMessage: message },
+          data: { status: 'FAILED', errorMessage: publicMessage },
         }),
         this.prisma.meal.update({
           where: { id: mealId },
@@ -109,6 +93,52 @@ export class AiAnalysisProcessor extends WorkerHost {
         }),
       ]);
     }
+  }
+
+  private toPublicErrorMessage(err: unknown): string {
+    const status =
+      typeof err === 'object' && err !== null && 'status' in err && typeof err.status === 'number'
+        ? err.status
+        : undefined;
+    const code =
+      typeof err === 'object' && err !== null && 'code' in err && typeof err.code === 'string'
+        ? err.code
+        : undefined;
+    const type =
+      typeof err === 'object' && err !== null && 'type' in err && typeof err.type === 'string'
+        ? err.type
+        : undefined;
+    const message = err instanceof Error ? err.message : String(err ?? 'Unknown error');
+    const haystack = `${status ?? ''} ${code ?? ''} ${type ?? ''} ${message}`.toLowerCase();
+
+    if (
+      status === 429 ||
+      /rate limit|too many requests|insufficient_quota|quota exceeded|billing/i.test(haystack)
+    ) {
+      return 'AI rate limit reached. Please wait a minute and try again.';
+    }
+
+    if (
+      status === 401 ||
+      status === 403 ||
+      /invalid api key|authentication|unauthorized|forbidden/i.test(haystack)
+    ) {
+      return 'AI provider authentication failed. Please try again later.';
+    }
+
+    if (
+      status === 408 ||
+      status === 502 ||
+      status === 503 ||
+      status === 504 ||
+      /timeout|timed out|econnreset|econnrefused|enotfound|eai_again|service unavailable|temporarily unavailable|overloaded|connection/i.test(
+        haystack,
+      )
+    ) {
+      return 'AI service is temporarily unavailable. Please try again shortly.';
+    }
+
+    return 'AI analysis failed. Please try again.';
   }
 
   private async persistResult(

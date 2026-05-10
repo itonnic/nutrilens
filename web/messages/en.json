@@ -35,7 +35,10 @@
     "skip": "Skip",
     "done": "Done",
     "estimate": "Estimate",
-    "estimateNotMedical": "Nutrition values are estimates and should not replace medical advice."
+    "estimateNotMedical": "Nutrition values are estimates and should not replace medical advice.",
+    "aiRateLimitTitle": "AI rate limit reached",
+    "aiRateLimitDesc": "The AI is rate limited right now. Please wait a minute and try again.",
+    "aiUnavailableDesc": "The AI service is temporarily unavailable. Please try again shortly."
   },
   "nav": {
     "today": "Today",
@@ -280,7 +283,8 @@
     "imageTooLarge": "Image must be 10MB or smaller.",
     "uploadFailed": "Upload failed",
     "duplicateDetected": "Same image uploaded recently",
-    "duplicateOpening": "Opening the existing meal you saved earlier."
+    "duplicateOpening": "Opening the existing meal you saved earlier.",
+    "readyToAnalyze": "Ready to analyze"
   },
   "mealDetail": {
     "loading": "Loading meal…",

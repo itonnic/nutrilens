@@ -33,8 +33,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const t = useTranslations('nav');
 
   return (
-    <div className="min-h-screen pb-24 md:pb-0">
-      <header className="sticky top-0 z-30 border-b border-white/40 bg-background/70 backdrop-blur-md">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[radial-gradient(circle_at_12%_0%,rgba(184,233,134,.25),transparent_30%),radial-gradient(circle_at_92%_8%,rgba(167,139,250,.18),transparent_34%),hsl(var(--background))] pb-28 md:pb-0">
+      <header className="sticky top-0 z-30 border-b border-white/45 bg-background/72 backdrop-blur-xl">
         <div className="container flex h-16 items-center justify-between">
           <Link href="/app" className="flex items-center gap-2 font-semibold">
             <span className="grid h-9 w-9 place-items-center rounded-2xl bg-primary/15 text-primary shadow-sm">
@@ -75,10 +75,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="container py-6 md:py-8">{children}</main>
+      <main className="container w-full max-w-full overflow-x-hidden px-4 py-5 md:py-8">{children}</main>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-white/40 bg-background/85 backdrop-blur-md md:hidden">
-        <div className="grid grid-cols-5 items-center px-2 py-1">
+      <nav className="fixed bottom-3 left-0 right-0 z-30 px-3 md:hidden">
+        <div className="mx-auto grid max-w-md grid-cols-5 items-center rounded-[2rem] border border-white/70 bg-background/88 px-2 py-2 shadow-[0_18px_50px_rgba(24,38,30,0.18)] backdrop-blur-xl supports-[padding:max(0px)]:pb-[max(.5rem,env(safe-area-inset-bottom))]">
           {NAV.map((item) => {
             const Icon = item.icon;
             const active = pathname === item.href || (item.href !== '/app' && pathname.startsWith(item.href));
@@ -87,7 +87,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="-mt-6 mx-auto grid h-14 w-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-soft"
+                  className="-mt-8 mx-auto grid h-16 w-16 place-items-center rounded-full bg-[linear-gradient(135deg,#172019,#08BD84)] text-primary-foreground shadow-[0_16px_38px_rgba(8,189,132,0.35)] ring-4 ring-background/85"
                   aria-label={t(item.labelKey)}
                 >
                   <Icon className="h-6 w-6" />
@@ -99,8 +99,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-1 rounded-2xl py-2 text-xs',
-                  active ? 'text-primary' : 'text-muted-foreground',
+                  'flex flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 text-[11px] font-medium transition-colors',
+                  active ? 'bg-primary/10 text-primary' : 'text-muted-foreground',
                 )}
               >
                 <Icon className="h-5 w-5" />
